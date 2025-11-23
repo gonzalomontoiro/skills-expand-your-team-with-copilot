@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Dark mode elements
   const darkModeToggle = document.getElementById("dark-mode-toggle");
-  const toggleIcon = darkModeToggle.querySelector(".toggle-icon");
+  const toggleIcon = darkModeToggle?.querySelector(".toggle-icon");
 
   // Activity categories with corresponding colors
   const activityTypes = {
@@ -867,6 +867,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Dark mode functionality
   function initializeDarkMode() {
+    if (!darkModeToggle || !toggleIcon) return;
+    
     // Check if user has a saved preference
     const savedMode = localStorage.getItem("darkMode");
     if (savedMode === "enabled") {
@@ -876,6 +878,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function toggleDarkMode() {
+    if (!toggleIcon) return;
+    
     document.body.classList.toggle("dark-mode");
     
     // Update icon based on current mode
@@ -889,7 +893,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Event listener for dark mode toggle
-  darkModeToggle.addEventListener("click", toggleDarkMode);
+  if (darkModeToggle) {
+    darkModeToggle.addEventListener("click", toggleDarkMode);
+  }
 
   // Initialize app
   initializeDarkMode();
