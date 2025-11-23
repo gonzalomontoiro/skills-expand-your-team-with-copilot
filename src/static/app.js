@@ -44,6 +44,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // Authentication state
   let currentUser = null;
 
+  // Social sharing URL templates
+  const SHARE_URLS = {
+    facebook: 'https://www.facebook.com/sharer/sharer.php?u=',
+    twitter: 'https://twitter.com/intent/tweet?text='
+  };
+
+  // HTML escaping function to prevent XSS
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   // Time range mappings for the dropdown
   const timeRanges = {
     morning: { start: "06:00", end: "08:00" }, // Before school hours
@@ -554,19 +567,19 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div class="share-buttons">
         <span class="share-label">Share:</span>
-        <button class="share-button share-facebook tooltip" data-activity="${name}" data-description="${details.description}" data-schedule="${formattedSchedule}" title="Share on Facebook">
+        <button class="share-button share-facebook tooltip" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" title="Share on Facebook">
           <span class="share-icon">📘</span>
           <span class="tooltip-text">Share on Facebook</span>
         </button>
-        <button class="share-button share-twitter tooltip" data-activity="${name}" data-description="${details.description}" data-schedule="${formattedSchedule}" title="Share on Twitter">
+        <button class="share-button share-twitter tooltip" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" title="Share on Twitter">
           <span class="share-icon">🐦</span>
           <span class="tooltip-text">Share on Twitter</span>
         </button>
-        <button class="share-button share-email tooltip" data-activity="${name}" data-description="${details.description}" data-schedule="${formattedSchedule}" title="Share via Email">
+        <button class="share-button share-email tooltip" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" title="Share via Email">
           <span class="share-icon">✉️</span>
           <span class="tooltip-text">Share via Email</span>
         </button>
-        <button class="share-button share-copy tooltip" data-activity="${name}" data-description="${details.description}" data-schedule="${formattedSchedule}" title="Copy link">
+        <button class="share-button share-copy tooltip" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" title="Copy link">
           <span class="share-icon">📋</span>
           <span class="tooltip-text">Copy link</span>
         </button>
@@ -895,11 +908,11 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (button.classList.contains("share-facebook")) {
       // Facebook share
-      const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`;
+      const facebookUrl = `${SHARE_URLS.facebook}${encodedUrl}&quote=${encodedText}`;
       window.open(facebookUrl, '_blank', 'width=600,height=400');
     } else if (button.classList.contains("share-twitter")) {
       // Twitter share
-      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+      const twitterUrl = `${SHARE_URLS.twitter}${encodedText}&url=${encodedUrl}`;
       window.open(twitterUrl, '_blank', 'width=600,height=400');
     } else if (button.classList.contains("share-email")) {
       // Email share
@@ -907,14 +920,34 @@ document.addEventListener("DOMContentLoaded", () => {
       const body = encodeURIComponent(`${shareText}\n\nVisit: ${currentUrl}`);
       window.location.href = `mailto:?subject=${subject}&body=${body}`;
     } else if (button.classList.contains("share-copy")) {
-      // Copy link to clipboard
+      // Copy link to clipboard with fallback for older browsers
       const textToCopy = `${shareText}\n${currentUrl}`;
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        showMessage("Link copied to clipboard!", "success");
-      }).catch((err) => {
-        console.error("Failed to copy:", err);
-        showMessage("Failed to copy link", "error");
-      });
+      
+      // Check if clipboard API is available
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          showMessage("Link copied to clipboard!", "success");
+        }).catch((err) => {
+          console.error("Failed to copy:", err);
+          showMessage("Failed to copy link", "error");
+        });
+      } else {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = textToCopy;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          showMessage("Link copied to clipboard!", "success");
+        } catch (err) {
+          console.error("Failed to copy:", err);
+          showMessage("Failed to copy link", "error");
+        }
+        document.body.removeChild(textarea);
+      }
     }
   }
 
